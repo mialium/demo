@@ -52,6 +52,33 @@
             transition: transform 0.1s linear;
             z-index: 2;
         }
+
+        #left-ear, #right-ear, #tail {
+            transform-origin: center;
+        }
+
+        .running #left-ear {
+            animation: earFlap 0.2s infinite alternate;
+        }
+
+        .running #right-ear {
+            animation: earFlap 0.2s infinite alternate-reverse;
+        }
+
+        .running #tail {
+            animation: tailWag 0.2s infinite;
+        }
+
+        @keyframes earFlap {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(20deg); }
+        }
+
+        @keyframes tailWag {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(5px); }
+            100% { transform: translateX(0); }
+        }
     </style>
 </head>
 <body>
@@ -66,9 +93,9 @@
         <ellipse cx="50" cy="60" rx="10" ry="8" fill="#ff6666"/> <!-- 鼻子 -->
         <circle cx="46" cy="60" r="2" fill="#333"/> <!-- 左鼻孔 -->
         <circle cx="54" cy="60" r="2" fill="#333"/> <!-- 右鼻孔 -->
-        <path d="M30 30 Q20 10 10 30" fill="none" stroke="#ff9999" stroke-width="10"/> <!-- 左耳 -->
-        <path d="M70 30 Q80 10 90 30" fill="none" stroke="#ff9999" stroke-width="10"/> <!-- 右耳 -->
-        <rect x="45" y="75" width="10" height="15" fill="#ff9999"/> <!-- 尾巴 -->
+        <path id="left-ear" d="M30 30 Q20 10 10 30" fill="none" stroke="#ff9999" stroke-width="10"/> <!-- 左耳 -->
+        <path id="right-ear" d="M70 30 Q80 10 90 30" fill="none" stroke="#ff9999" stroke-width="10"/> <!-- 右耳 -->
+        <rect id="tail" x="45" y="75" width="10" height="15" fill="#ff9999"/> <!-- 尾巴 -->
     </svg>
 
     <script>
@@ -115,8 +142,9 @@
         let particles = [];
         let pigX = canvas.width / 2;
         let pigY = canvas.height / 2;
-        let pigSpeed = 3;
-        let wanderAngle = 0;
+        let mouseX = pigX;
+        let mouseY = pigY;
+        const pigSpeed = 4;
 
         function createFirework(x, y) {
             for (let i = 0; i < 80; i++) {
@@ -137,24 +165,17 @@
                 }
             }
 
-            // 猪的移动逻辑
-            if (particles.length > 0) {
-                // 追逐最近的烟花
-                let nearest = particles.reduce((prev, curr) => {
-                    const prevDist = Math.hypot(pigX - prev.x, pigY - prev.y);
-                    const currDist = Math.hypot(pigX - curr.x, pigY - curr.y);
-                    return prevDist < currDist ? prev : curr;
-                });
-                const dx = nearest.x - pigX;
-                const dy = nearest.y - pigY;
+            // 猪追逐鼠标
+            const dx = mouseX - pigX;
+            const dy = mouseY - pigY;
+            const distance = Math.hypot(dx, dy);
+            if (distance > 5) { // 避免抖动
                 const angle = Math.atan2(dy, dx);
                 pigX += Math.cos(angle) * pigSpeed;
                 pigY += Math.sin(angle) * pigSpeed;
+                pig.classList.add('running');
             } else {
-                // 没有烟花时随机游走
-                wanderAngle += (Math.random() - 0.5) * 0.2;
-                pigX += Math.cos(wanderAngle) * pigSpeed * 0.5;
-                pigY += Math.sin(wanderAngle) * pigSpeed * 0.5;
+                pig.classList.remove('running');
             }
 
             // 限制猪在屏幕内
@@ -162,7 +183,7 @@
             pigY = Math.max(40, Math.min(canvas.height - 40, pigY));
 
             // 更新猪的位置和朝向
-            const facingRight = particles.length > 0 ? (particles[0].x > pigX) : (Math.cos(wanderAngle) > 0);
+            const facingRight = dx > 0;
             pig.style.transform = `translate(${pigX - 40}px, ${pigY - 40}px) scaleX(${facingRight ? 1 : -1})`;
 
             requestAnimationFrame(animate);
@@ -170,6 +191,13 @@
 
         animate();
 
+        // 监听鼠标移动
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        // 随机生成烟花
         setInterval(() => {
             createFirework(Math.random() * canvas.width, Math.random() * canvas.height);
         }, 800);
