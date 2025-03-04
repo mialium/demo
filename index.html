@@ -438,27 +438,7 @@
 
 
 
-        import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import Confetti from "react-confetti";
-
-export default function Piggy() {
-  const [position, setPosition] = useState({ x: 100, y: 100 });
-  const [dragging, setDragging] = useState(false);
-  const [dancing, setDancing] = useState(false);
-  const [showFireworks, setShowFireworks] = useState(false);
-  const pigRef = useRef(null);
-
-  // 处理拖拽结束
-  const handleDragEnd = (_, info) => {
-    setDragging(false);
-    const newX = info.point.x;
-    const newY = info.point.y;
-    setPosition({ x: newX, y: newY });
-
-    // 挣扎动画
-    setTimeout(() => {
-      setPosition({ x: newX + 10, y: newY
+       
     </script>
 </body>
 </html>
