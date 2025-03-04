@@ -15,6 +15,7 @@
             background: linear-gradient(135deg, #1a1a1a, #2c3e50);
             font-family: 'Arial', sans-serif;
             overflow: hidden;
+            position: relative;
         }
 
         .text {
@@ -28,31 +29,11 @@
         }
 
         @keyframes transformText {
-            0% {
-                transform: scale(1) rotate(0deg);
-                color: #fff;
-                text-shadow: 0 0 10px #fff, 0 0 20px #ff6b6b;
-            }
-            25% {
-                transform: scale(1.2) rotate(5deg);
-                color: #ff6b6b;
-                text-shadow: 0 0 15px #ff6b6b, 0 0 25px #fff;
-            }
-            50% {
-                transform: scale(0.9) rotate(-5deg);
-                color: #4ecdc4;
-                text-shadow: 0 0 20px #4ecdc4, 0 0 30px #fff;
-            }
-            75% {
-                transform: scale(1.1) rotate(3deg);
-                color: #f7d794;
-                text-shadow: 0 0 15px #f7d794, 0 0 25px #fff;
-            }
-            100% {
-                transform: scale(1) rotate(0deg);
-                color: #fff;
-                text-shadow: 0 0 10px #fff, 0 0 20px #ff6b6b;
-            }
+            0% { transform: scale(1) rotate(0deg); color: #fff; text-shadow: 0 0 10px #fff, 0 0 20px #ff6b6b; }
+            25% { transform: scale(1.2) rotate(5deg); color: #ff6b6b; text-shadow: 0 0 15px #ff6b6b, 0 0 25px #fff; }
+            50% { transform: scale(0.9) rotate(-5deg); color: #4ecdc4; text-shadow: 0 0 20px #4ecdc4, 0 0 30px #fff; }
+            75% { transform: scale(1.1) rotate(3deg); color: #f7d794; text-shadow: 0 0 15px #f7d794, 0 0 25px #fff; }
+            100% { transform: scale(1) rotate(0deg); color: #fff; text-shadow: 0 0 10px #fff, 0 0 20px #ff6b6b; }
         }
 
         canvas {
@@ -63,15 +44,37 @@
             height: 100%;
             pointer-events: none;
         }
+
+        #pig {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            transition: transform 0.1s linear;
+            z-index: 2;
+        }
     </style>
 </head>
 <body>
     <div class="text">刘敏是个大笨蛋</div>
     <canvas id="fireworks"></canvas>
+    <svg id="pig" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="30" fill="#ff9999"/> <!-- 头 -->
+        <circle cx="40" cy="40" r="5" fill="#fff"/> <!-- 左眼 -->
+        <circle cx="60" cy="40" r="5" fill="#fff"/> <!-- 右眼 -->
+        <circle cx="40" cy="40" r="2" fill="#000"/> <!-- 左瞳孔 -->
+        <circle cx="60" cy="40" r="2" fill="#000"/> <!-- 右瞳孔 -->
+        <ellipse cx="50" cy="60" rx="10" ry="8" fill="#ff6666"/> <!-- 鼻子 -->
+        <circle cx="46" cy="60" r="2" fill="#333"/> <!-- 左鼻孔 -->
+        <circle cx="54" cy="60" r="2" fill="#333"/> <!-- 右鼻孔 -->
+        <path d="M30 30 Q20 10 10 30" fill="none" stroke="#ff9999" stroke-width="10"/> <!-- 左耳 -->
+        <path d="M70 30 Q80 10 90 30" fill="none" stroke="#ff9999" stroke-width="10"/> <!-- 右耳 -->
+        <rect x="45" y="75" width="10" height="15" fill="#ff9999"/> <!-- 尾巴 -->
+    </svg>
 
     <script>
         const canvas = document.getElementById('fireworks');
         const ctx = canvas.getContext('2d');
+        const pig = document.getElementById('pig');
         
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -110,9 +113,13 @@
         }
 
         let particles = [];
+        let pigX = canvas.width / 2;
+        let pigY = canvas.height / 2;
+        let pigSpeed = 3;
+        let wanderAngle = 0;
 
         function createFirework(x, y) {
-            for (let i = 0; i < 80; i++) { // 增加粒子数量
+            for (let i = 0; i < 80; i++) {
                 particles.push(new Particle(x, y));
             }
             playFireworkSound();
@@ -130,28 +137,52 @@
                 }
             }
 
+            // 猪的移动逻辑
+            if (particles.length > 0) {
+                // 追逐最近的烟花
+                let nearest = particles.reduce((prev, curr) => {
+                    const prevDist = Math.hypot(pigX - prev.x, pigY - prev.y);
+                    const currDist = Math.hypot(pigX - curr.x, pigY - curr.y);
+                    return prevDist < currDist ? prev : curr;
+                });
+                const dx = nearest.x - pigX;
+                const dy = nearest.y - pigY;
+                const angle = Math.atan2(dy, dx);
+                pigX += Math.cos(angle) * pigSpeed;
+                pigY += Math.sin(angle) * pigSpeed;
+            } else {
+                // 没有烟花时随机游走
+                wanderAngle += (Math.random() - 0.5) * 0.2;
+                pigX += Math.cos(wanderAngle) * pigSpeed * 0.5;
+                pigY += Math.sin(wanderAngle) * pigSpeed * 0.5;
+            }
+
+            // 限制猪在屏幕内
+            pigX = Math.max(40, Math.min(canvas.width - 40, pigX));
+            pigY = Math.max(40, Math.min(canvas.height - 40, pigY));
+
+            // 更新猪的位置和朝向
+            const facingRight = particles.length > 0 ? (particles[0].x > pigX) : (Math.cos(wanderAngle) > 0);
+            pig.style.transform = `translate(${pigX - 40}px, ${pigY - 40}px) scaleX(${facingRight ? 1 : -1})`;
+
             requestAnimationFrame(animate);
         }
 
         animate();
 
-        // 随机生成烟花
         setInterval(() => {
             createFirework(Math.random() * canvas.width, Math.random() * canvas.height);
         }, 800);
 
-        // 点击生成烟花
         canvas.addEventListener('click', (e) => {
             createFirework(e.x, e.y);
         });
 
-        // 添加烟花音效
         function playFireworkSound() {
             const audio = new Audio('https://www.soundjay.com/buttons/firework-01.mp3');
-            audio.play().catch(() => {}); // 忽略播放失败的情况
+            audio.play().catch(() => {});
         }
 
-        // 初始化时播放一次惊喜效果
         setTimeout(() => {
             for (let i = 0; i < 5; i++) {
                 setTimeout(() => {
