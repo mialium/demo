@@ -422,19 +422,9 @@
             }
         }
 
-        function createClouds() {
-            for (let i = 0; i < 5; i++) {
-                const cloud = document.createElement('div');
-                cloud.className = 'cloud';
-                cloud.style.left = `${Math.random() * 100}vw`;
-                cloud.style.top = `${Math.random() * 50}vh`;
-                cloud.style.animationDelay = `${Math.random() * 6}s`;
-                document.body.appendChild(cloud);
-            }
-        }
-
+      
         createStars();
-        createClouds();
+        
         bgMusic.play().catch(() => {});
 
         setTimeout(() => {
