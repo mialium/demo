@@ -56,6 +56,7 @@
             height: 80px;
             z-index: 2;
             display: none;
+            cursor: pointer;
         }
 
         #left-ear, #right-ear, #tail {
@@ -86,6 +87,10 @@
             animation: shakeHead 0.5s infinite;
         }
 
+        .dancing {
+            animation: dance 1s infinite alternate;
+        }
+
         @keyframes earFlap {
             from { transform: rotate(0deg); }
             to { transform: rotate(20deg); }
@@ -114,6 +119,11 @@
             50% { transform: rotate(0deg); }
             75% { transform: rotate(-10deg); }
             100% { transform: rotate(0deg); }
+        }
+
+        @keyframes dance {
+            0% { transform: rotate(-10deg) scale(1.1); }
+            100% { transform: rotate(10deg) scale(0.9); }
         }
 
         .footprint {
@@ -181,21 +191,6 @@
             border-radius: 50%;
             animation: twinkle 2s infinite;
         }
-
-        @keyframes float {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0); }
-        }
-
-        .cloud {
-            position: absolute;
-            width: 100px;
-            height: 50px;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 50px;
-            animation: float 6s infinite;
-        }
     </style>
 </head>
 <body>
@@ -217,12 +212,16 @@
     <audio id="bg-music" loop>
         <source src="https://www.soundjay.com/misc/sounds/cartoon-music-1.mp3" type="audio/mpeg">
     </audio>
+    <audio id="dance-music">
+        <source src="https://www.soundjay.com/misc/sounds/cartoon-music-2.mp3" type="audio/mpeg">
+    </audio>
 
     <script>
         const canvas = document.getElementById('fireworks');
         const ctx = canvas.getContext('2d');
         const pig = document.getElementById('pig');
         const bgMusic = document.getElementById('bg-music');
+        const danceMusic = document.getElementById('dance-music');
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -260,7 +259,35 @@
             }
         }
 
+        class Meteor {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = -20;
+                this.speedY = Math.random() * 4 + 2;
+                this.length = Math.random() * 50 + 20;
+                this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            }
+
+            update() {
+                this.y += this.speedY;
+                if (this.y > canvas.height) {
+                    this.y = -20;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+
+            draw() {
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x + this.length / 2, this.y + this.length);
+                ctx.stroke();
+            }
+        }
+
         let particles = [];
+        let meteors = [];
         let pigX = canvas.width / 2;
         let pigY = canvas.height / 2;
         let targetX = pigX;
@@ -268,6 +295,8 @@
         const pigSpeed = 6;
         let isFirstClick = true;
         let lastSpeechTime = 0;
+        let isDancing = false;
+        let danceTimeout;
 
         const pigSayings = [
             "赵佳琦你个大笨蛋，追不上我吧！",
@@ -294,6 +323,10 @@
             playFireworkSound();
         }
 
+        function createMeteor() {
+            meteors.push(new Meteor());
+        }
+
         function animate() {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -304,6 +337,11 @@
                 if (particles[i].life <= 0) {
                     particles.splice(i, 1);
                 }
+            }
+
+            for (let i = meteors.length - 1; i >= 0; i--) {
+                meteors[i].update();
+                meteors[i].draw();
             }
 
             const dx = targetX - pigX;
@@ -363,8 +401,27 @@
             addHeart(targetX, targetY);
         });
 
+        pig.addEventListener('mousedown', () => {
+            danceTimeout = setTimeout(() => {
+                isDancing = true;
+                pig.classList.add('dancing');
+                danceMusic.play().catch(() => {});
+            }, 1000); // 长按1秒触发跳舞
+        });
+
+        pig.addEventListener('mouseup', () => {
+            clearTimeout(danceTimeout);
+            if (isDancing) {
+                isDancing = false;
+                pig.classList.remove('dancing');
+                danceMusic.pause();
+                danceMusic.currentTime = 0;
+            }
+        });
+
         setInterval(() => {
             createFirework(Math.random() * canvas.width, Math.random() * canvas.height);
+            createMeteor();
         }, 800);
 
         function playFireworkSound() {
@@ -399,46 +456,4 @@
             speech.style.left = `${x - 60}px`;
             speech.style.top = `${y - 70}px`;
             document.body.appendChild(speech);
-            setTimeout(() => speech.remove(), 2500);
-        }
-
-        function addHeart(x, y) {
-            const heart = document.createElement('div');
-            heart.className = 'heart';
-            heart.style.left = `${x - 10}px`;
-            heart.style.top = `${y - 10}px`;
-            document.body.appendChild(heart);
-            setTimeout(() => heart.remove(), 2000);
-        }
-
-        function createStars() {
-            for (let i = 0; i < 100; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                star.style.left = `${Math.random() * 100}vw`;
-                star.style.top = `${Math.random() * 100}vh`;
-                star.style.animationDelay = `${Math.random() * 2}s`;
-                document.body.appendChild(star);
-            }
-        }
-
-      
-        createStars();
-        
-        bgMusic.play().catch(() => {});
-
-        setTimeout(() => {
-            for (let i = 0; i < 5; i++) {
-                setTimeout(() => {
-                    createFirework(canvas.width / 2, canvas.height / 2);
-                }, i * 200);
-            }
-        }, 500);
-
-
-
-
-       
-    </script>
-</body>
-</html>
+            setTimeout(() => speech.remove
