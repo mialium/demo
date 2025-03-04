@@ -25,7 +25,12 @@
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
             position: relative;
             z-index: 1;
-            animation: transformText 3s infinite;
+            animation: fadeIn 2s ease-in, transformText 3s infinite;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
         }
 
         @keyframes transformText {
@@ -50,7 +55,7 @@
             width: 80px;
             height: 80px;
             z-index: 2;
-            display: none; /* 一开始隐藏 */
+            display: none;
         }
 
         #left-ear, #right-ear, #tail {
@@ -73,6 +78,14 @@
             animation: jump 0.5s ease-out;
         }
 
+        .rolling {
+            animation: roll 1s linear infinite;
+        }
+
+        .shaking {
+            animation: shakeHead 0.5s infinite;
+        }
+
         @keyframes earFlap {
             from { transform: rotate(0deg); }
             to { transform: rotate(20deg); }
@@ -88,6 +101,19 @@
             0% { transform: translateY(0) scaleX(1); }
             50% { transform: translateY(-30px) scaleX(1); }
             100% { transform: translateY(0) scaleX(1); }
+        }
+
+        @keyframes roll {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes shakeHead {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(10deg); }
+            50% { transform: rotate(0deg); }
+            75% { transform: rotate(-10deg); }
+            100% { transform: rotate(0deg); }
         }
 
         .footprint {
@@ -116,6 +142,15 @@
             border: 2px solid #ff9999;
         }
 
+        .heart {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ff6b6b;
+            clip-path: polygon(50% 0%, 100% 35%, 82% 100%, 50% 70%, 18% 100%, 0% 35%);
+            animation: floatUp 2s ease-out forwards;
+        }
+
         @keyframes fadeOut {
             0% { opacity: 1; }
             100% { opacity: 0; }
@@ -127,30 +162,68 @@
             80% { opacity: 1; transform: translateY(-30px) scale(1); }
             100% { opacity: 0; transform: translateY(-40px) scale(1); }
         }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(0.5); opacity: 0; }
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
+        }
+
+        .cloud {
+            position: absolute;
+            width: 100px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50px;
+            animation: float 6s infinite;
+        }
     </style>
 </head>
 <body>
     <div class="text">赵佳琦是个大美女</div>
     <canvas id="fireworks"></canvas>
     <svg id="pig" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="30" fill="#ff9999"/> <!-- 头 -->
-        <circle cx="40" cy="40" r="5" fill="#fff"/> <!-- 左眼 -->
-        <circle cx="60" cy="40" r="5" fill="#fff"/> <!-- 右眼 -->
-        <circle cx="40" cy="40" r="2" fill="#000"/> <!-- 左瞳孔 -->
-        <circle cx="60" cy="40" r="2" fill="#000"/> <!-- 右瞳孔 -->
-        <ellipse cx="50" cy="60" rx="10" ry="8" fill="#ff6666"/> <!-- 鼻子 -->
-        <circle cx="46" cy="60" r="2" fill="#333"/> <!-- 左鼻孔 -->
-        <circle cx="54" cy="60" r="2" fill="#333"/> <!-- 右鼻孔 -->
-        <path id="left-ear" d="M30 30 Q20 10 10 30" fill="none" stroke="#ff9999" stroke-width="10"/> <!-- 左耳 -->
-        <path id="right-ear" d="M70 30 Q80 10 90 30" fill="none" stroke="#ff9999" stroke-width="10"/> <!-- 右耳 -->
-        <rect id="tail" x="45" y="75" width="10" height="15" fill="#ff9999"/> <!-- 尾巴 -->
+        <circle cx="50" cy="50" r="30" fill="#ff9999"/>
+        <circle cx="40" cy="40" r="5" fill="#fff"/>
+        <circle cx="60" cy="40" r="5" fill="#fff"/>
+        <circle cx="40" cy="40" r="2" fill="#000"/>
+        <circle cx="60" cy="40" r="2" fill="#000"/>
+        <ellipse cx="50" cy="60" rx="10" ry="8" fill="#ff6666"/>
+        <circle cx="46" cy="60" r="2" fill="#333"/>
+        <circle cx="54" cy="60" r="2" fill="#333"/>
+        <path id="left-ear" d="M30 30 Q20 10 10 30" fill="none" stroke="#ff9999" stroke-width="10"/>
+        <path id="right-ear" d="M70 30 Q80 10 90 30" fill="none" stroke="#ff9999" stroke-width="10"/>
+        <rect id="tail" x="45" y="75" width="10" height="15" fill="#ff9999"/>
     </svg>
+    <audio id="bg-music" loop>
+        <source src="https://www.soundjay.com/misc/sounds/cartoon-music-1.mp3" type="audio/mpeg">
+    </audio>
 
     <script>
         const canvas = document.getElementById('fireworks');
         const ctx = canvas.getContext('2d');
         const pig = document.getElementById('pig');
-        
+        const bgMusic = document.getElementById('bg-music');
+
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
@@ -194,9 +267,8 @@
         let targetY = pigY;
         const pigSpeed = 6;
         let isFirstClick = true;
-        let lastSpeechTime = 0; // 记录上一次自白时间
+        let lastSpeechTime = 0;
 
-        // 更多有趣的对白
         const pigSayings = [
             "赵佳琦你个大笨蛋，追不上我吧！",
             "哼哼，我跑得比风还快！",
@@ -234,11 +306,10 @@
                 }
             }
 
-            // 猪移动到目标位置
             const dx = targetX - pigX;
             const dy = targetY - pigY;
             const distance = Math.hypot(dx, dy);
-            if (distance > pigSpeed) { // 如果距离大于一步移动距离，继续跑
+            if (distance > pigSpeed) {
                 const angle = Math.atan2(dy, dx);
                 pigX += Math.cos(angle) * pigSpeed;
                 pigY += Math.sin(angle) * pigSpeed;
@@ -246,13 +317,12 @@
                 if (Math.random() < 0.2) {
                     addFootprint(pigX, pigY);
                 }
-                // 控制自白间隔至少1秒
                 const currentTime = Date.now();
                 if (currentTime - lastSpeechTime > 1000 && Math.random() < 0.1) {
                     addSpeech(pigX, pigY);
                     lastSpeechTime = currentTime;
                 }
-            } else { // 到达目标
+            } else {
                 pigX = targetX;
                 pigY = targetY;
                 if (pig.classList.contains('running')) {
@@ -263,11 +333,9 @@
                 }
             }
 
-            // 限制猪在屏幕内
             pigX = Math.max(40, Math.min(canvas.width - 40, pigX));
             pigY = Math.max(40, Math.min(canvas.height - 40, pigY));
 
-            // 更新猪的位置和朝向
             const facingRight = dx > 0;
             pig.style.left = `${pigX - 40}px`;
             pig.style.top = `${pigY - 40}px`;
@@ -278,7 +346,6 @@
 
         animate();
 
-        // 点击时设置目标位置并显示猪
         document.addEventListener('click', (e) => {
             const rect = document.body.getBoundingClientRect();
             targetX = e.clientX - rect.left;
@@ -293,9 +360,9 @@
                 isFirstClick = false;
             }
             createFirework(targetX, targetY);
+            addHeart(targetX, targetY);
         });
 
-        // 随机生成烟花
         setInterval(() => {
             createFirework(Math.random() * canvas.width, Math.random() * canvas.height);
         }, 800);
@@ -306,7 +373,13 @@
         }
 
         function playPigSound() {
-            const audio = new Audio('https://www.soundjay.com/animals/pig-01.mp3');
+            const sounds = [
+                'https://www.soundjay.com/animals/pig-01.mp3',
+                'https://www.soundjay.com/animals/pig-02.mp3',
+                'https://www.soundjay.com/animals/pig-03.mp3'
+            ];
+            const sound = sounds[Math.floor(Math.random() * sounds.length)];
+            const audio = new Audio(sound);
             audio.play().catch(() => {});
         }
 
@@ -323,11 +396,46 @@
             const speech = document.createElement('div');
             speech.className = 'speech';
             speech.textContent = pigSayings[Math.floor(Math.random() * pigSayings.length)];
-            speech.style.left = `${x - 60}px`; // 稍微偏左，适应更长文字
-            speech.style.top = `${y - 70}px`;  // 上方更高
+            speech.style.left = `${x - 60}px`;
+            speech.style.top = `${y - 70}px`;
             document.body.appendChild(speech);
-            setTimeout(() => speech.remove(), 2500); // 与动画时间同步
+            setTimeout(() => speech.remove(), 2500);
         }
+
+        function addHeart(x, y) {
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            heart.style.left = `${x - 10}px`;
+            heart.style.top = `${y - 10}px`;
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 2000);
+        }
+
+        function createStars() {
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = `${Math.random() * 100}vw`;
+                star.style.top = `${Math.random() * 100}vh`;
+                star.style.animationDelay = `${Math.random() * 2}s`;
+                document.body.appendChild(star);
+            }
+        }
+
+        function createClouds() {
+            for (let i = 0; i < 5; i++) {
+                const cloud = document.createElement('div');
+                cloud.className = 'cloud';
+                cloud.style.left = `${Math.random() * 100}vw`;
+                cloud.style.top = `${Math.random() * 50}vh`;
+                cloud.style.animationDelay = `${Math.random() * 6}s`;
+                document.body.appendChild(cloud);
+            }
+        }
+
+        createStars();
+        createClouds();
+        bgMusic.play().catch(() => {});
 
         setTimeout(() => {
             for (let i = 0; i < 5; i++) {
