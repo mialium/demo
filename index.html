@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>翟慧珊是个大笨蛋</title>
+    <title>刘敏是个大笨蛋</title>
     <style>
         body {
             margin: 0;
@@ -49,8 +49,8 @@
             position: absolute;
             width: 80px;
             height: 80px;
-            transition: transform 0.1s linear;
             z-index: 2;
+            display: none; /* 一开始隐藏 */
         }
 
         #left-ear, #right-ear, #tail {
@@ -69,6 +69,10 @@
             animation: tailWag 0.2s infinite;
         }
 
+        .jumping {
+            animation: jump 0.5s ease-out;
+        }
+
         @keyframes earFlap {
             from { transform: rotate(0deg); }
             to { transform: rotate(20deg); }
@@ -79,10 +83,54 @@
             50% { transform: translateX(5px); }
             100% { transform: translateX(0); }
         }
+
+        @keyframes jump {
+            0% { transform: translateY(0) scaleX(1); }
+            50% { transform: translateY(-30px) scaleX(1); }
+            100% { transform: translateY(0) scaleX(1); }
+        }
+
+        .footprint {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 153, 153, 0.5);
+            border-radius: 50%;
+            z-index: 0;
+            pointer-events: none;
+            animation: fadeOut 2s forwards;
+        }
+
+        .speech {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.95);
+            color: #ff4444;
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            z-index: 3;
+            pointer-events: none;
+            animation: fadeSpeech 2.5s forwards;
+            border: 2px solid #ff9999;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes fadeSpeech {
+            0% { opacity: 0; transform: translateY(0) scale(0.8); }
+            20% { opacity: 1; transform: translateY(-30px) scale(1); }
+            80% { opacity: 1; transform: translateY(-30px) scale(1); }
+            100% { opacity: 0; transform: translateY(-40px) scale(1); }
+        }
     </style>
 </head>
 <body>
-    <div class="text">翟慧珊是个大笨蛋</div>
+    <div class="text">刘敏是个大笨蛋</div>
     <canvas id="fireworks"></canvas>
     <svg id="pig" viewBox="0 0 100 100">
         <circle cx="50" cy="50" r="30" fill="#ff9999"/> <!-- 头 -->
@@ -144,7 +192,28 @@
         let pigY = canvas.height / 2;
         let targetX = pigX;
         let targetY = pigY;
-        const pigSpeed = 6; // 加快速度以体现“跑过来”
+        const pigSpeed = 6;
+        let isFirstClick = true;
+        let lastSpeechTime = 0; // 记录上一次自白时间
+
+        // 更多有趣的对白
+        const pigSayings = [
+            "刘敏你个大笨蛋，追不上我吧！",
+            "哼哼，我跑得比风还快！",
+            "哎呀，鞋子跑丢了咋办？",
+            "别看我，我只是只无辜的小猪！",
+            "冲啊，我要当猪界第一名！",
+            "哈哈，你点我干啥？我很忙的！",
+            "跑跑跑，跑出一片新天地！",
+            "猪猪我最帅，谁敢不服？",
+            "刘敏，快给我准备猪粮！",
+            "哎哟，跑得我肚子饿了！",
+            "别烦我，我在锻炼身体呢！",
+            "猪生巅峰，就在这一刻！",
+            "你点我，我跑，你累不累啊？",
+            "哼哼，猪猪也有梦想好不好！",
+            "跑得飞起，刘敏吃我尾气吧！"
+        ];
 
         function createFirework(x, y) {
             for (let i = 0; i < 80; i++) {
@@ -165,17 +234,33 @@
                 }
             }
 
-            // 猪跑向目标位置
+            // 猪移动到目标位置
             const dx = targetX - pigX;
             const dy = targetY - pigY;
             const distance = Math.hypot(dx, dy);
-            if (distance > 5) { // 避免抖动
+            if (distance > pigSpeed) { // 如果距离大于一步移动距离，继续跑
                 const angle = Math.atan2(dy, dx);
                 pigX += Math.cos(angle) * pigSpeed;
                 pigY += Math.sin(angle) * pigSpeed;
                 pig.classList.add('running');
-            } else {
-                pig.classList.remove('running');
+                if (Math.random() < 0.2) {
+                    addFootprint(pigX, pigY);
+                }
+                // 控制自白间隔至少1秒
+                const currentTime = Date.now();
+                if (currentTime - lastSpeechTime > 1000 && Math.random() < 0.1) {
+                    addSpeech(pigX, pigY);
+                    lastSpeechTime = currentTime;
+                }
+            } else { // 到达目标
+                pigX = targetX;
+                pigY = targetY;
+                if (pig.classList.contains('running')) {
+                    pig.classList.remove('running');
+                    pig.classList.add('jumping');
+                    playPigSound();
+                    setTimeout(() => pig.classList.remove('jumping'), 500);
+                }
             }
 
             // 限制猪在屏幕内
@@ -184,18 +269,30 @@
 
             // 更新猪的位置和朝向
             const facingRight = dx > 0;
-            pig.style.transform = `translate(${pigX - 40}px, ${pigY - 40}px) scaleX(${facingRight ? 1 : -1})`;
+            pig.style.left = `${pigX - 40}px`;
+            pig.style.top = `${pigY - 40}px`;
+            pig.style.transform = `scaleX(${facingRight ? 1 : -1})`;
 
             requestAnimationFrame(animate);
         }
 
         animate();
 
-        // 点击时更新目标位置
+        // 点击时设置目标位置并显示猪
         document.addEventListener('click', (e) => {
-            targetX = e.clientX;
-            targetY = e.clientY;
-            createFirework(e.clientX, e.clientY); // 保留点击触发烟花
+            const rect = document.body.getBoundingClientRect();
+            targetX = e.clientX - rect.left;
+            targetY = e.clientY - rect.top;
+            if (isFirstClick) {
+                pigX = targetX;
+                pigY = targetY;
+                pig.style.display = 'block';
+                pig.classList.add('jumping');
+                playPigSound();
+                setTimeout(() => pig.classList.remove('jumping'), 500);
+                isFirstClick = false;
+            }
+            createFirework(targetX, targetY);
         });
 
         // 随机生成烟花
@@ -206,6 +303,30 @@
         function playFireworkSound() {
             const audio = new Audio('https://www.soundjay.com/buttons/firework-01.mp3');
             audio.play().catch(() => {});
+        }
+
+        function playPigSound() {
+            const audio = new Audio('https://www.soundjay.com/animals/pig-01.mp3');
+            audio.play().catch(() => {});
+        }
+
+        function addFootprint(x, y) {
+            const footprint = document.createElement('div');
+            footprint.className = 'footprint';
+            footprint.style.left = `${x - 10}px`;
+            footprint.style.top = `${y - 10}px`;
+            document.body.appendChild(footprint);
+            setTimeout(() => footprint.remove(), 2000);
+        }
+
+        function addSpeech(x, y) {
+            const speech = document.createElement('div');
+            speech.className = 'speech';
+            speech.textContent = pigSayings[Math.floor(Math.random() * pigSayings.length)];
+            speech.style.left = `${x - 60}px`; // 稍微偏左，适应更长文字
+            speech.style.top = `${y - 70}px`;  // 上方更高
+            document.body.appendChild(speech);
+            setTimeout(() => speech.remove(), 2500); // 与动画时间同步
         }
 
         setTimeout(() => {
