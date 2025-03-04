@@ -22,21 +22,39 @@
             font-size: 4em;
             text-align: center;
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-            animation: glow 2s ease-in-out infinite alternate;
             position: relative;
             z-index: 1;
+            animation: transformText 3s infinite;
         }
 
-        @keyframes glow {
-            from {
-                text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #ff6b6b;
+        @keyframes transformText {
+            0% {
+                transform: scale(1) rotate(0deg);
+                color: #fff;
+                text-shadow: 0 0 10px #fff, 0 0 20px #ff6b6b;
             }
-            to {
-                text-shadow: 0 0 20px #fff, 0 0 30px #ff6b6b, 0 0 40px #4ecdc4;
+            25% {
+                transform: scale(1.2) rotate(5deg);
+                color: #ff6b6b;
+                text-shadow: 0 0 15px #ff6b6b, 0 0 25px #fff;
+            }
+            50% {
+                transform: scale(0.9) rotate(-5deg);
+                color: #4ecdc4;
+                text-shadow: 0 0 20px #4ecdc4, 0 0 30px #fff;
+            }
+            75% {
+                transform: scale(1.1) rotate(3deg);
+                color: #f7d794;
+                text-shadow: 0 0 15px #f7d794, 0 0 25px #fff;
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                color: #fff;
+                text-shadow: 0 0 10px #fff, 0 0 20px #ff6b6b;
             }
         }
 
-        /* 烟花效果 */
         canvas {
             position: absolute;
             top: 0;
@@ -52,7 +70,6 @@
     <canvas id="fireworks"></canvas>
 
     <script>
-        // 烟花效果 JavaScript
         const canvas = document.getElementById('fireworks');
         const ctx = canvas.getContext('2d');
         
@@ -68,14 +85,16 @@
             constructor(x, y) {
                 this.x = x;
                 this.y = y;
-                this.size = Math.random() * 5 + 1;
-                this.speedX = Math.random() * 3 - 1.5;
-                this.speedY = Math.random() * 3 - 1.5;
-                this.life = 100;
+                this.size = Math.random() * 6 + 2;
+                this.speedX = Math.random() * 4 - 2;
+                this.speedY = Math.random() * 4 - 2;
+                this.life = 120;
                 this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                this.gravity = 0.05;
             }
 
             update() {
+                this.speedY += this.gravity;
                 this.x += this.speedX;
                 this.y += this.speedY;
                 this.life -= 2;
@@ -92,12 +111,11 @@
 
         let particles = [];
 
-        function createFirework() {
-            const x = Math.random() * canvas.width;
-            const y = Math.random() * canvas.height;
-            for (let i = 0; i < 50; i++) {
+        function createFirework(x, y) {
+            for (let i = 0; i < 80; i++) { // 增加粒子数量
                 particles.push(new Particle(x, y));
             }
+            playFireworkSound();
         }
 
         function animate() {
@@ -117,15 +135,30 @@
 
         animate();
 
-        // 每隔一段时间生成新的烟花
-        setInterval(createFirework, 1000);
+        // 随机生成烟花
+        setInterval(() => {
+            createFirework(Math.random() * canvas.width, Math.random() * canvas.height);
+        }, 800);
 
         // 点击生成烟花
         canvas.addEventListener('click', (e) => {
-            for (let i = 0; i < 50; i++) {
-                particles.push(new Particle(e.x, e.y));
-            }
+            createFirework(e.x, e.y);
         });
+
+        // 添加烟花音效
+        function playFireworkSound() {
+            const audio = new Audio('https://www.soundjay.com/buttons/firework-01.mp3');
+            audio.play().catch(() => {}); // 忽略播放失败的情况
+        }
+
+        // 初始化时播放一次惊喜效果
+        setTimeout(() => {
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    createFirework(canvas.width / 2, canvas.height / 2);
+                }, i * 200);
+            }
+        }, 500);
     </script>
 </body>
 </html>
