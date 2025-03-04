@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>翟慧珊是个大笨蛋</title>
+    <title>刘敏是个大笨蛋</title>
     <style>
         body {
             margin: 0;
@@ -142,9 +142,9 @@
         let particles = [];
         let pigX = canvas.width / 2;
         let pigY = canvas.height / 2;
-        let mouseX = pigX;
-        let mouseY = pigY;
-        const pigSpeed = 4;
+        let targetX = pigX;
+        let targetY = pigY;
+        const pigSpeed = 6; // 加快速度以体现“跑过来”
 
         function createFirework(x, y) {
             for (let i = 0; i < 80; i++) {
@@ -165,9 +165,9 @@
                 }
             }
 
-            // 猪追逐鼠标
-            const dx = mouseX - pigX;
-            const dy = mouseY - pigY;
+            // 猪跑向目标位置
+            const dx = targetX - pigX;
+            const dy = targetY - pigY;
             const distance = Math.hypot(dx, dy);
             if (distance > 5) { // 避免抖动
                 const angle = Math.atan2(dy, dx);
@@ -191,20 +191,17 @@
 
         animate();
 
-        // 监听鼠标移动
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
+        // 点击时更新目标位置
+        document.addEventListener('click', (e) => {
+            targetX = e.clientX;
+            targetY = e.clientY;
+            createFirework(e.clientX, e.clientY); // 保留点击触发烟花
         });
 
         // 随机生成烟花
         setInterval(() => {
             createFirework(Math.random() * canvas.width, Math.random() * canvas.height);
         }, 800);
-
-        canvas.addEventListener('click', (e) => {
-            createFirework(e.x, e.y);
-        });
 
         function playFireworkSound() {
             const audio = new Audio('https://www.soundjay.com/buttons/firework-01.mp3');
