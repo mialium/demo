@@ -453,7 +453,19 @@
             const speech = document.createElement('div');
             speech.className = 'speech';
             speech.textContent = pigSayings[Math.floor(Math.random() * pigSayings.length)];
-            speech.style.left = `${x - 60}px`;
-            speech.style.top = `${y - 70}px`;
+            speech.style.left = `${x - 60}px`; // 稍微偏左，适应更长文字
+            speech.style.top = `${y - 70}px`;  // 上方更高
             document.body.appendChild(speech);
-            setTimeout(() => speech.remove
+            setTimeout(() => speech.remove(), 2500); // 与动画时间同步
+        }
+
+        setTimeout(() => {
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    createFirework(canvas.width / 2, canvas.height / 2);
+                }, i * 200);
+            }
+        }, 500);
+    </script>
+</body>
+</html>
